@@ -1,0 +1,28 @@
+- name: Install authirma module
+  become: yes
+  composer:
+      command: require
+      working_dir: /usr/share/simplesamlphp
+      arguments: irma/simplesamlphp-module-authirma
+
+- name: Add IRMA authentication source to authsources.conf
+  become: yes
+  template:
+      src: authsources.php.j2
+      dest: /etc/simplesamlphp/authsources.php
+
+- name: Add JWT private key
+  become: yes
+  copy:
+      content: "{{ privatekey }}"
+      dest: /etc/ssl/certs/authirma-sk.pem
+      owner: www-data
+      mode: 0400
+
+- name: Add JWT API server public key
+  become: yes
+  copy:
+      content: "{{ apiserver_publickey }}"
+      dest: /etc/ssl/certs/authirma-apiserver-pk.pem
+      owner: www-data
+      mode: 0400

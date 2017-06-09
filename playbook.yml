@@ -1,0 +1,4 @@
+- hosts: surfidp
+  roles:
+    - { role: preliminary, tags: ['all', 'setup', 'preliminary'] }
+    - { role: ssp,         tags: ['all', 'ssp'] }

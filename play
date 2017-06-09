@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+
+# if ARGV.length < 2
+#   puts "\nUsage: ./play [host(s)] [tag(s)] \nExample: ./play development setup"
+#   abort
+# end
+
+#cmd = "ansible-playbook playbook.yml -v -i 'inventories/#{ARGV[0]}/inventory' #{vault} --tags #{ARGV[1]}"
+cmd = "ansible-playbook playbook.yml -vv -i 'inventories/dev/inventory' --tags all"
+
+puts "Executing: #{cmd}"
+exec cmd
