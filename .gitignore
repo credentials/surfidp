@@ -1,2 +1,4 @@
-inventories
+inventories/*
+!inventories/dev
+inventories/dev/files/*.pem
 .vagrant/

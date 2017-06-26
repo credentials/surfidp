@@ -1,0 +1,4 @@
+There should be two files here (they are used in host_vars/vagrant/main.yml):
+
+- apiserver.pem: the public key of the API server that will verify the attributes,
+- sk.pem: the private key with which to sign our disclosure JWTs.
