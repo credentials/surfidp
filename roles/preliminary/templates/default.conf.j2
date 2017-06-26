@@ -1,0 +1,23 @@
+server {
+    listen       443 ssl http2 default_server;
+    listen       [::]:443 ssl http2 default_server;
+    server_name  {{ hostname }};
+    index index.php index.html index.htm;
+
+    ssl_certificate "/etc/letsencrypt/live/{{ hostname }}/fullchain.pem";
+    ssl_certificate_key "/etc/letsencrypt/live/{{ hostname }}/privkey.pem";
+    ssl_session_cache shared:SSL:1m;
+    ssl_session_timeout 10m;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    location /simplesaml {
+        alias /opt/simplesamlphp/www;
+        location ~ ^(?<prefix>/simplesaml)(?<phpfile>.+?\.php)(?<pathinfo>/.*)?$ {
+            include fastcgi_params;
+            fastcgi_pass unix:/var/run/php-fpm/php-fpm.sock;
+            fastcgi_param SCRIPT_FILENAME $document_root$phpfile;
+            fastcgi_param PATH_INFO       $pathinfo if_not_empty;
+        }
+    }
+}

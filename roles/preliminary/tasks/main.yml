@@ -1,18 +1,68 @@
-- name: Install packages
-  apt: name={{ item }} state=present
-  with_items:
-    - composer
-    - simplesamlphp
-    - unzip
-    - git
-    - php-mbstring
-    - php-pdo-sqlite
+# Install the "REMI" repo which contain newer php packages that override the default
+# that come with the distro (CentOS7: 5.4; CentOS6: 5.3)
+- name: check for presence of the remi repository file
   become: yes
+  stat: path=/etc/yum.repos.d/remi.repo
+  register: remi_config
 
-- name: Enable apache simplesamlphp configuration
+- name: Install REMI repo
   become: yes
-  command: a2enconf simplesamlphp
+  yum: name=http://rpms.famillecollet.com/enterprise/remi-release-7.rpm state=present
+  when: remi_config.stat.exists == False
+
+- name: Enable REMI repo
+  become: yes
+  copy: src=remi.repo dest=/etc/yum.repos.d/remi.repo
+  when: remi_config.stat.exists == False
+
+- name: Install epel-release for nginx
+  become: yes
+  yum: name=epel-release state=present
+
+- name: Install packages
+  become: yes
+  yum: name={{ item }} state=present
+  with_items:
+    - nginx
+    - php
+    - php-fpm
+    - composer
+    - git
+
+# nginx will refuse to run without certificates, but certbot needs nginx to obtain
+# the certificates - so install selfsigned certs first
+- name: Ensure Let's Encrypt directory structure exists
+  become: yes
+  file: path="/etc/letsencrypt/live/{{ hostname }}" state=directory
+  notify: restart nginx
+
+- name: Ensure there are certs installed
+  become: yes
+  command: "openssl req -subj '/CN=example.com/O=Example/C=US' -new -newkey rsa:2048 -days 3650 -nodes -x509 -keyout /etc/letsencrypt/live/{{ hostname }}/privkey.pem -out /etc/letsencrypt/live/{{ hostname }}/fullchain.pem"
   args:
-    creates: /etc/apache2/conf-enabled/simplesamlphp.conf
-  notify:
-  - restart apache2
+    creates: "/etc/letsencrypt/live/{{ hostname }}/privkey.pem"
+  notify: restart nginx
+
+- name: Install PHP FPM conf file
+  become: yes
+  copy: src="www.conf" dest="/etc/php-fpm.d/www.conf"
+  notify: restart php-fpm
+
+- name: Install nginx virtual host file
+  become: yes
+  template: src="default.conf.j2" dest="/etc/nginx/conf.d/default.conf"
+  notify: restart nginx
+
+- name: Set correct owner on PHP session directory
+  become: yes
+  file:
+    path: /var/lib/php/session
+    owner: nginx
+
+- name: Enable php-fpm
+  become: yes
+  service: name=php-fpm enabled=yes
+
+- name: Enable nginx
+  become: yes
+  service: name=nginx enabled=yes

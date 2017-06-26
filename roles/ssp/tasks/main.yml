@@ -1,28 +1,62 @@
+- name: Check for presence of SimpleSAMLphp git repo
+  become: yes
+  stat: path=/opt/simplesamlphp/composer.json
+  register: ssp
+
+- name: Install SimpleSAMLphp from git
+  become: yes
+  git:
+    repo: "https://github.com/simplesamlphp/simplesamlphp.git"
+    dest: /opt/simplesamlphp
+    # version: v1.14.14 # This version has a problem, checking out master
+  when: ssp.stat.exists == False
+
+- name: Generate salt for SimpleSAMLphp
+  shell: tr -c -d '0123456789abcdefghijklmnopqrstuvwxyz' </dev/urandom | dd bs=32 count=1 2>/dev/null
+  register: sspsalt
+  when: ssp.stat.exists == False
+
+- name: Generate password for SimpleSAMLphp
+  shell: tr -c -d '0123456789abcdefghijklmnopqrstuvwxyz' </dev/urandom | dd bs=32 count=1 2>/dev/null
+  register: ssppassword
+  when: ssp.stat.exists == False
+
+- name: Put SimpleSAMLphp configuration
+  become: yes
+  template:
+    src: config.php.j2
+    dest: /opt/simplesamlphp/config/config.php
+  when: ssp.stat.exists == False
+
 - name: Install authirma module
   become: yes
   composer:
-      command: require
-      working_dir: /usr/share/simplesamlphp
-      arguments: irma/simplesamlphp-module-authirma
+    command: require
+    working_dir: /opt/simplesamlphp
+    arguments: irma/simplesamlphp-module-authirma
 
 - name: Add IRMA authentication source to authsources.conf
   become: yes
   template:
-      src: authsources.php.j2
-      dest: /etc/simplesamlphp/authsources.php
+    src: authsources.php.j2
+    dest: /opt/simplesamlphp/config/authsources.php
+
+- name: Ensure SimpleSAMLphp cert dir exists
+  become: yes
+  file: path=/opt/simplesamlphp/cert state=directory
 
 - name: Add JWT private key
   become: yes
   copy:
-      content: "{{ privatekey }}"
-      dest: /etc/ssl/certs/authirma-sk.pem
-      owner: www-data
-      mode: 0400
+    content: "{{ privatekey }}"
+    dest: /opt/simplesamlphp/cert/authirma-sk.pem
+    owner: nginx
+    mode: 0400
 
 - name: Add JWT API server public key
   become: yes
   copy:
-      content: "{{ apiserver_publickey }}"
-      dest: /etc/ssl/certs/authirma-apiserver-pk.pem
-      owner: www-data
-      mode: 0400
+    content: "{{ apiserver_publickey }}"
+    dest: /opt/simplesamlphp/cert/authirma-apiserver-pk.pem
+    owner: nginx
+    mode: 0400
