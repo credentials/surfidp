@@ -1,12 +1,15 @@
 #!/usr/bin/env ruby
 
-# if ARGV.length < 2
-#   puts "\nUsage: ./play [host(s)] [tag(s)] \nExample: ./play development setup"
-#   abort
-# end
+if ARGV.length < 2
+  puts "\nUsage: ./play [host(s)] [tag(s)] \nExample: ./play dev all"
+  abort
+end
 
-#cmd = "ansible-playbook playbook.yml -v -i 'inventories/#{ARGV[0]}/inventory' #{vault} --tags #{ARGV[1]}"
-cmd = "ansible-playbook playbook.yml -vv -i 'inventories/dev/inventory' --tags all"
+vault = if File.file?("inventories/#{ARGV[0]}/vaultkey")
+  "--vault-password-file 'inventories/#{ARGV[0]}/vaultkey'"
+end
+
+cmd = "ansible-playbook playbook.yml -v -i 'inventories/#{ARGV[0]}/inventory' #{vault} --tags #{ARGV[1]}"
 
 puts "Executing: #{cmd}"
 exec cmd
