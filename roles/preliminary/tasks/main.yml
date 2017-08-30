@@ -28,6 +28,43 @@
     - php-fpm
     - composer
     - git
+    - certbot
+
+- name: Install PHP FPM conf file
+  become: yes
+  copy: src="www.conf" dest="/etc/php-fpm.d/www.conf"
+  notify: restart php-fpm
+
+- name: Set correct owner on PHP session directory
+  become: yes
+  file:
+    path: /var/lib/php/session
+    owner: nginx
+
+- name: Enable php-fpm
+  become: yes
+  service: name=php-fpm enabled=yes
+
+- name: Install nginx virtual host file
+  become: yes
+  template: src="default.conf.j2" dest="/etc/nginx/conf.d/default.conf"
+  notify: restart nginx
+
+- name: Install nginx conf
+  become: yes
+  copy: src="nginx.conf" dest="/etc/nginx/nginx.conf"
+  notify: restart nginx
+
+- name: Ensure /var/www/acme is present
+  become: yes
+  file: path=/var/www/acme state=directory
+
+- name: Put acme.conf in nginx configuration dir
+  become: yes
+  template:
+    src: acme.conf.j2
+    dest: /etc/nginx/conf.d/acme.conf
+  notify: restart nginx
 
 # nginx will refuse to run without certificates, but certbot needs nginx to obtain
 # the certificates - so install selfsigned certs first
@@ -43,26 +80,20 @@
     creates: "/etc/letsencrypt/live/{{ hostname }}/privkey.pem"
   notify: restart nginx
 
-- name: Install PHP FPM conf file
-  become: yes
-  copy: src="www.conf" dest="/etc/php-fpm.d/www.conf"
-  notify: restart php-fpm
-
-- name: Install nginx virtual host file
-  become: yes
-  template: src="default.conf.j2" dest="/etc/nginx/conf.d/default.conf"
-  notify: restart nginx
-
-- name: Set correct owner on PHP session directory
-  become: yes
-  file:
-    path: /var/lib/php/session
-    owner: nginx
-
-- name: Enable php-fpm
-  become: yes
-  service: name=php-fpm enabled=yes
-
 - name: Enable nginx
   become: yes
   service: name=nginx enabled=yes
+
+- name: Remove temporary selfsigned certs
+  become: yes
+  file: path="/etc/letsencrypt/live/{{ hostname }}" state=absent
+
+# --agree-tos prevents an interactive screen coming up asking for our permissions
+# --noninteractive prevents any such screen from popping up, taking the default choice
+# --keep: if there already exist a certificate that is not about to expire, don't do anything
+# --webroot: enables the webroot plugin, i.e., the following -w flag
+- name: Ensure Let's Encrypt TLS certs are requested and installed
+  become: yes
+  command: /usr/bin/certbot certonly --agree-tos --noninteractive --keep --cert-name {{ hostname }} -m {{ letsencrypt_email }} --webroot -w /var/www/acme -d {{ hostname }}
+  when: hostname is defined
+  notify: restart nginx

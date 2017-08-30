@@ -1,0 +1,13 @@
+server {
+	listen 80;
+	server_name {{ hostname }};
+
+	location / {
+		return 403;
+	}
+
+	location /.well-known {
+		default_type "text/plain";
+		root /var/www/acme;
+	}
+}
