@@ -28,6 +28,24 @@
     dest: /opt/simplesamlphp/config/config.php
   when: ssp.stat.exists == False
 
+- name: configure local IdP
+  copy: src=files/saml20-idp-hosted.php dest=/etc/simplesamlphp/metadata/
+
+- name: configure remote SP
+  copy: src=files/saml20-sp-remote.php dest=/etc/simplesamlphp/metadata/
+
+- name: Add SAML signing cert
+  become: yes
+  copy:
+    content: "{{ samlkey }}"
+    dest: /opt/simplesamlphp/cert/server.crt
+
+- name: Add SAML signing key
+  become: yes
+  copy:
+    content: "{{ samlkey }}"
+    dest: /opt/simplesamlphp/cert/server.key
+
 - name: Install authirma module
   become: yes
   composer:
