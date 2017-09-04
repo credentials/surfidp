@@ -29,10 +29,10 @@
   when: ssp.stat.exists == False
 
 - name: configure local IdP
-  copy: src=files/saml20-idp-hosted.php dest=/etc/simplesamlphp/metadata/
+  copy: src=files/saml20-idp-hosted.php dest=/opt/simplesamlphp/metadata/
 
 - name: configure remote SP
-  copy: src=files/saml20-sp-remote.php dest=/etc/simplesamlphp/metadata/
+  copy: src=files/saml20-sp-remote.php dest=/opt/simplesamlphp/metadata/
 
 - name: Add SAML signing cert
   become: yes
