@@ -39,14 +39,16 @@
 - name: Add SAML signing cert
   become: yes
   copy:
-    content: "{{ samlkey }}"
-    dest: /opt/simplesamlphp/cert/server.crt
+    content: "{{ saml_crt }}"
+    dest: /opt/simplesamlphp/cert/saml.crt
 
 - name: Add SAML signing key
   become: yes
   copy:
-    content: "{{ samlkey }}"
-    dest: /opt/simplesamlphp/cert/server.key
+    content: "{{ saml_key }}"
+    dest: /opt/simplesamlphp/cert/saml.key
+    owner: nginx
+    mode: 0400
 
 - name: Install authirma module
   become: yes
