@@ -1,6 +1,6 @@
 server {
 	listen 80;
-	server_name {{ hostname }};
+	server_name {{ hostname | join(' ') }};
 
 	location / {
 		return 403;

@@ -71,7 +71,7 @@
 # --webroot: enables the webroot plugin, i.e., the following -w flag
 - name: Ensure Let's Encrypt TLS certs are requested and installed
   become: yes
-  command: /usr/bin/certbot certonly --agree-tos --noninteractive --keep --cert-name {{ hostname }} -m {{ letsencrypt_email }} --webroot -w /var/www/acme -d {{ hostname }}
+  command: /usr/bin/certbot certonly --agree-tos --noninteractive --keep --cert-name {{ hostname[0] }} -m {{ letsencrypt_email }} --webroot -w /var/www/acme -d {{ hostname | join(' -d ') }}
   when: hostname is defined
   notify: restart nginx
 

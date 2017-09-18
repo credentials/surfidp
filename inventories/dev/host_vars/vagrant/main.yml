@@ -21,4 +21,5 @@ authirma_configuration: |
 privatekey: "{{ lookup('file', inventory_dir+'/files/sk.pem') }}"
 apiserver_publickey: "{{ lookup('file', inventory_dir+'/files/apiserver.pem') }}"
 
-hostname: localhost
+hostname:
+  - localhost
