@@ -21,12 +21,18 @@
   register: ssppassword
   when: ssp.stat.exists == False
 
+- name: Put configuration secrets file
+  become: yes
+  template:
+    src: secrets.inc.php.j2
+    dest: /opt/simplesamlphp/config/secrets.inc.php
+  when: ssp.stat.exists == False
+
 - name: Put SimpleSAMLphp configuration
   become: yes
   template:
     src: config.php.j2
     dest: /opt/simplesamlphp/config/config.php
-  when: ssp.stat.exists == False
 
 - name: configure local IdP
   become: yes
