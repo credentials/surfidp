@@ -79,3 +79,12 @@
   become: yes
   template: src="default.conf.j2" dest="/etc/nginx/conf.d/default.conf"
   notify: restart nginx
+
+- name: Install Let's Encrypt renewal cron job
+  become: yes
+  cron:
+    name: Letsencrypt
+    user: root
+    minute: 41
+    hour: 9
+    job: /bin/certbot renew --post-hook "/bin/systemctl reload nginx.service"
