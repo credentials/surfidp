@@ -42,20 +42,6 @@
   become: yes
   copy: src=files/saml20-sp-remote.php dest=/opt/simplesamlphp/metadata/
 
-- name: Add SAML signing cert
-  become: yes
-  copy:
-    content: "{{ saml_crt }}"
-    dest: /opt/simplesamlphp/cert/saml.crt
-
-- name: Add SAML signing key
-  become: yes
-  copy:
-    content: "{{ saml_key }}"
-    dest: /opt/simplesamlphp/cert/saml.key
-    owner: nginx
-    mode: 0400
-
 - name: Install authirma module
   become: yes
   composer:
@@ -72,6 +58,20 @@
 - name: Ensure SimpleSAMLphp cert dir exists
   become: yes
   file: path=/opt/simplesamlphp/cert state=directory
+
+- name: Add SAML signing cert
+  become: yes
+  copy:
+    content: "{{ saml_crt }}"
+    dest: /opt/simplesamlphp/cert/saml.crt
+
+- name: Add SAML signing key
+  become: yes
+  copy:
+    content: "{{ saml_key }}"
+    dest: /opt/simplesamlphp/cert/saml.key
+    owner: nginx
+    mode: 0400
 
 - name: Add JWT private key
   become: yes
